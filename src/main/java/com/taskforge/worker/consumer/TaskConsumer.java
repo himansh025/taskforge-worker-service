@@ -102,5 +102,10 @@ public class TaskConsumer {
 
         kafkaTemplate.send("task.failed.v1", data.getTaskExecutionId(), objectMapper.writeValueAsString(envelope));
         log.info("Sent task.failed event for taskExecution {}", data.getTaskExecutionId());
+
+        if (!retryable || data.getAttempt() >= 3) {
+            kafkaTemplate.send("task.dlq.v1", data.getTaskExecutionId(), objectMapper.writeValueAsString(envelope));
+            log.warn("Dispatched dead-letter event to task.dlq.v1 for taskExecution {}", data.getTaskExecutionId());
+        }
     }
 }
